@@ -237,6 +237,7 @@ final class ModifierHotKeyMonitor {
         var flags: CGEventFlags = []
         if event.modifierFlags.contains(.option) { flags.insert(.maskAlternate) }
         if event.modifierFlags.contains(.control) { flags.insert(.maskControl) }
+        if event.modifierFlags.contains(.function) { flags.insert(.maskSecondaryFn) }
         return ModifierFlagsEvent(
             keyCode: event.keyCode,
             flags: flags,
@@ -356,27 +357,26 @@ final class ModifierHotKeyMonitor {
             "modifier event active=\(modifierIsActive) edge=\(pressed) timestamp=\(String(format: "%.3f", event.timestamp), privacy: .public)"
         )
 
+        // Push-to-talk: hold the hotkey to record, release to stop and send.
         if !modifierIsActive {
-            defer {
-                pressStartedDuringSession = false
-                startTriggeredForPress = false
-            }
-            if pressStartedDuringSession && !startTriggeredForPress {
+            // Key up: finalize and send only if this hold started the session.
+            let holdOwnsSession = startTriggeredForPress
+            startTriggeredForPress = false
+            pressStartedDuringSession = false
+            if holdOwnsSession {
+                NatterLog.hotKey.debug("push-to-talk release -> stop")
                 actionHandler(.stop)
             }
             return
         }
         guard pressed else { return }
 
-        pressStartedDuringSession = sessionIsActive
-        startTriggeredForPress = false
-        if !sessionIsActive, let action = detector.keyDown(
-            at: event.timestamp,
-            sessionIsActive: false
-        ) {
-            NatterLog.hotKey.debug("modifier action=\(String(describing: action), privacy: .public)")
-            startTriggeredForPress = action == .start
-            actionHandler(action)
+        // Key down: begin recording immediately.
+        if !sessionIsActive {
+            NatterLog.hotKey.debug("push-to-talk press -> start")
+            startTriggeredForPress = true
+            pressStartedDuringSession = true
+            actionHandler(.start)
         }
     }
 }
@@ -398,6 +398,7 @@ private extension ModifierHotKey {
         switch self {
         case .rightOption: .maskAlternate
         case .rightControl: .maskControl
+        case .function: .maskSecondaryFn
         }
     }
 
@@ -406,6 +407,7 @@ private extension ModifierHotKey {
         case CancelModifierTapDetector.leftOptionKeyCode: .maskAlternate
         case ModifierHotKey.rightOption.keyCode: .maskAlternate
         case ModifierHotKey.rightControl.keyCode: .maskControl
+        case ModifierHotKey.function.keyCode: .maskSecondaryFn
         default: []
         }
     }

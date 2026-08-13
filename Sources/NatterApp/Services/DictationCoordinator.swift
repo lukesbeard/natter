@@ -17,6 +17,7 @@ final class DictationCoordinator {
     private let recovery = TranscriptRecovery()
     private let feedback = FeedbackSoundPlayer()
     private let overlay: OverlayPanelController
+    private let mediaInterruption = MediaInterruptionController()
     private var armExpiryTask: Task<Void, Never>?
     private var streamTask: Task<Void, Never>?
     var sessionTask: Task<Void, Never>?
@@ -59,6 +60,7 @@ final class DictationCoordinator {
 
     func cancel() {
         guard store.phase == .preparing || store.phase == .listening else { return }
+        mediaInterruption.end()
         armExpiryTask?.cancel()
         armExpiryTask = nil
         session.recordingStoppedAt = Date()
@@ -151,6 +153,7 @@ final class DictationCoordinator {
 
     private func start() {
         guard store.canStart else { return }
+        mediaInterruption.begin()
         armExpiryTask?.cancel()
         armExpiryTask = nil
         session.performanceTrace = DictationPerformanceTrace()
@@ -244,6 +247,10 @@ final class DictationCoordinator {
 
     private func stop() {
         guard store.phase == .preparing || store.phase == .listening else { return }
+
+        // Restore speakers and resume media the moment the key is released,
+        // rather than waiting for transcription to finish.
+        mediaInterruption.end()
 
         if store.phase == .preparing {
             armExpiryTask?.cancel()
@@ -754,6 +761,7 @@ final class DictationCoordinator {
     }
 
     func fail(_ error: Error) {
+        mediaInterruption.end()
         armExpiryTask?.cancel()
         armExpiryTask = nil
         microphone.stopImmediately()

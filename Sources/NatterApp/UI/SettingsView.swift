@@ -244,7 +244,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Dictation key")
                     .font(.headline)
-                Text("Double tap to start. Press Command-Shift-M while listening to switch mode. Tap once to stop.")
+                Text("Hold to record, release to send. Press Command-Shift-M while listening to switch mode.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

@@ -15,6 +15,10 @@ let package = Package(
         .executable(name: "natter-asr-eval", targets: ["NatterAsrEval"])
     ],
     dependencies: [
+        // Local override: mlx-swift 0.31.6 with its Package.swift lowered from
+        // swift-tools-version 6.3 to 6.1 and the CUDA build-tool plugin removed,
+        // so the whole graph builds on stock Xcode's Swift 6.2.4 (no 6.3 toolchain).
+        .package(name: "mlx-swift", path: "vendor/mlx-swift"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
         .package(
             url: "https://github.com/FluidInference/FluidAudio.git",

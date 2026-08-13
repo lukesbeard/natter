@@ -28,12 +28,22 @@ if [[ "$configuration" == "debug" || "$configuration" == "Debug" ]]; then
 fi
 products_dir="$repo_dir/.xcode-build/Build/Products/$configuration_name"
 
+toolchain_args=()
+if [[ -n "${TOOLCHAINS:-}" ]]; then
+    toolchain_args=(-toolchain "$TOOLCHAINS")
+    # xcodebuild honors the -toolchain flag for package manifest parsing, but a
+    # TOOLCHAINS value left in the environment overrides it back to the default
+    # Xcode toolchain and breaks resolution of newer swift-tools manifests.
+    unset TOOLCHAINS
+fi
+
 xcodebuild build \
     -quiet \
     -scheme Natter \
     -destination 'platform=macOS,arch=arm64' \
     -configuration "$configuration_name" \
     -derivedDataPath .xcode-build \
+    "${toolchain_args[@]}" \
     CODE_SIGNING_ALLOWED=NO \
     -skipPackagePluginValidation \
     -skipMacroValidation

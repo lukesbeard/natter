@@ -3,6 +3,7 @@ import Foundation
 public enum ModifierHotKey: String, CaseIterable, Codable, Identifiable, Sendable {
     case rightOption
     case rightControl
+    case function
 
     public var id: String { rawValue }
 
@@ -10,6 +11,7 @@ public enum ModifierHotKey: String, CaseIterable, Codable, Identifiable, Sendabl
         switch self {
         case .rightOption: "Right Option"
         case .rightControl: "Right Control"
+        case .function: "Fn (Globe)"
         }
     }
 
@@ -17,6 +19,7 @@ public enum ModifierHotKey: String, CaseIterable, Codable, Identifiable, Sendabl
         switch self {
         case .rightOption: 61
         case .rightControl: 62
+        case .function: 63
         }
     }
 }
